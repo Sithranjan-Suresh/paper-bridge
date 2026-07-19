@@ -1,28 +1,34 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client.js'
 import TimelineList from '../components/TimelineList.jsx'
 import ConflictBanner from '../components/ConflictBanner.jsx'
+import UploadDropzone from '../components/UploadDropzone.jsx'
 
 export default function CaseTimelinePage() {
   const { caseId } = useParams()
+  const navigate = useNavigate()
   const [timeline, setTimeline] = useState(null)
   const [error, setError] = useState(null)
 
+  const loadTimeline = useCallback(() => {
+    return api.getTimeline(caseId).then(setTimeline)
+  }, [caseId])
+
   useEffect(() => {
     let cancelled = false
-    api
-      .getTimeline(caseId)
-      .then((data) => {
-        if (!cancelled) setTimeline(data)
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message)
-      })
+    loadTimeline().catch((err) => {
+      if (!cancelled) setError(err.message)
+    })
     return () => {
       cancelled = true
     }
-  }, [caseId])
+  }, [loadTimeline])
+
+  const handleUpload = async (file) => {
+    const document = await api.uploadDocument(caseId, file)
+    navigate(`/document/${document.id}`)
+  }
 
   if (error) {
     return <div className="p-8 text-red-600">Failed to load case: {error}</div>
@@ -53,6 +59,10 @@ export default function CaseTimelinePage() {
       )}
 
       <TimelineList documents={timeline.documents} supersededDocumentIds={supersededDocumentIds} />
+
+      <div className="mt-8">
+        <UploadDropzone onUpload={handleUpload} />
+      </div>
     </div>
   )
 }
