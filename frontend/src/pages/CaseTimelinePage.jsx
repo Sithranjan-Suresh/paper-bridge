@@ -4,6 +4,7 @@ import { api } from '../api/client.js'
 import TimelineList from '../components/TimelineList.jsx'
 import ConflictBanner from '../components/ConflictBanner.jsx'
 import UploadDropzone from '../components/UploadDropzone.jsx'
+import SkeletonBlock from '../components/SkeletonBlock.jsx'
 
 export default function CaseTimelinePage() {
   const { caseId } = useParams()
@@ -35,7 +36,17 @@ export default function CaseTimelinePage() {
   }
 
   if (!timeline) {
-    return <div className="p-8 text-gray-500">Loading case timeline…</div>
+    return (
+      <div className="mx-auto max-w-3xl p-8">
+        <SkeletonBlock className="mb-2 h-8 w-72" />
+        <SkeletonBlock className="mb-6 h-4 w-48" />
+        <div className="flex flex-col gap-3">
+          <SkeletonBlock className="h-20 w-full" />
+          <SkeletonBlock className="h-20 w-full" />
+          <SkeletonBlock className="h-20 w-full" />
+        </div>
+      </div>
+    )
   }
 
   const conflictEvents = timeline.events.filter((e) => e.event_type === 'supersedes' || e.event_type === 'conflicts_with')

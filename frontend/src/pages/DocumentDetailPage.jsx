@@ -5,6 +5,7 @@ import ExtractionPanel from '../components/ExtractionPanel.jsx'
 import ExplanationPanel from '../components/ExplanationPanel.jsx'
 import UrgencyBreakdown from '../components/UrgencyBreakdown.jsx'
 import LiteracyToggle from '../components/LiteracyToggle.jsx'
+import SkeletonBlock from '../components/SkeletonBlock.jsx'
 
 const DOC_TYPE_LABELS = {
   uscis_notice: 'USCIS Notice',
@@ -53,7 +54,15 @@ export default function DocumentDetailPage() {
   }
 
   if (!document) {
-    return <div className="p-8 text-gray-500">Loading document…</div>
+    return (
+      <div className="mx-auto max-w-2xl p-8">
+        <SkeletonBlock className="mb-4 h-4 w-32" />
+        <SkeletonBlock className="mb-2 h-8 w-64" />
+        <SkeletonBlock className="mb-6 h-4 w-40" />
+        <SkeletonBlock className="mb-6 h-32 w-full" />
+        <SkeletonBlock className="h-40 w-full" />
+      </div>
+    )
   }
 
   return (
@@ -91,7 +100,9 @@ export default function DocumentDetailPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">What This Means</h2>
           <LiteracyToggle value={literacyLevel} onChange={handleLiteracyChange} disabled={isRegenerating} />
         </div>
-        <ExplanationPanel explanation={document.explanation} />
+        <div className={`transition-opacity duration-200 ${isRegenerating ? 'opacity-40' : 'opacity-100'}`}>
+          <ExplanationPanel explanation={document.explanation} />
+        </div>
       </section>
     </div>
   )
