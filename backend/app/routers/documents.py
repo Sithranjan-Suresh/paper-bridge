@@ -74,3 +74,43 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     return _document_detail(document, db)
+
+
+@router.get("/documents/{document_id}/explanation")
+def regenerate_explanation(document_id: int, literacy_level: str = "standard", db: Session = Depends(get_db)):
+    import json
+
+    from app.models import ExplanationRecord
+    from app.services.rag_service import get_rag_service
+    from app.schemas import ExplanationOut
+
+    if literacy_level not in ("simple", "standard", "detailed"):
+        raise HTTPException(status_code=400, detail="literacy_level must be one of: simple, standard, detailed")
+
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    existing = next((e for e in document.explanations if e.literacy_level == literacy_level), None)
+    if existing:
+        return ExplanationOut(
+            literacy_level=existing.literacy_level,
+            generated_text=existing.generated_text,
+            source_citations=json.loads(existing.source_citations or "[]"),
+        )
+
+    result = get_rag_service().generate(document.raw_text, literacy_level=literacy_level)
+    record = ExplanationRecord(
+        document_id=document.id,
+        literacy_level=literacy_level,
+        generated_text=result["text"],
+        source_citations=json.dumps(result["citations"]),
+    )
+    db.add(record)
+    db.commit()
+
+    return ExplanationOut(
+        literacy_level=literacy_level,
+        generated_text=result["text"],
+        source_citations=result["citations"],
+    )
