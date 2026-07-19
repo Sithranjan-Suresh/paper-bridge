@@ -87,7 +87,7 @@ export default function DocumentDetailPage() {
       </section>
 
       <section className="mt-6">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">What This Means</h2>
           <LiteracyToggle value={literacyLevel} onChange={handleLiteracyChange} disabled={isRegenerating} />
         </div>
