@@ -3,6 +3,7 @@ uvicorn[standard]==0.30.6
 sqlalchemy==2.0.35
 python-multipart==0.0.9
 pydantic==2.9.2
+python-dotenv==1.0.1
 
 # ML / NLP
 spacy==3.7.5
