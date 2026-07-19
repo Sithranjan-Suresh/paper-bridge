@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.init_db import init_db
+from app.routers import cases
 from app.seed import run as seed_demo_case
 
 app = FastAPI(title="PaperBridge API")
@@ -23,3 +24,6 @@ def on_startup():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+app.include_router(cases.router)
