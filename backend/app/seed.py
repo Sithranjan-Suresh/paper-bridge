@@ -88,7 +88,7 @@ def seed_demo_case(db: Session) -> None:
         breakdown={
             "days_until_deadline": -0.35,
             "doc_type_base_severity": 0.4,
-            "consequence_keywords": 0.25,
+            "consequence_keyword_score": 0.25,
             "notice_stage": 0.1,
         },
     )
@@ -144,7 +144,7 @@ def seed_demo_case(db: Session) -> None:
         breakdown={
             "days_until_deadline": 0.5,
             "doc_type_base_severity": 0.4,
-            "consequence_keywords": 0.2,
+            "consequence_keyword_score": 0.2,
             "notice_stage": 0.15,
         },
     )
@@ -219,7 +219,7 @@ def seed_demo_case(db: Session) -> None:
         breakdown={
             "days_until_deadline": 0.2,
             "doc_type_base_severity": 0.3,
-            "consequence_keywords": 0.35,
+            "consequence_keyword_score": 0.35,
             "notice_stage": 0.1,
         },
     )
@@ -277,7 +277,7 @@ def seed_demo_case(db: Session) -> None:
         breakdown={
             "days_until_deadline": 0.1,
             "doc_type_base_severity": 0.2,
-            "consequence_keywords": 0.1,
+            "consequence_keyword_score": 0.1,
             "notice_stage": 0.05,
         },
     )
@@ -331,7 +331,7 @@ def seed_demo_case(db: Session) -> None:
         breakdown={
             "days_until_deadline": 0.0,
             "doc_type_base_severity": 0.05,
-            "consequence_keywords": 0.0,
+            "consequence_keyword_score": 0.0,
             "notice_stage": 0.0,
         },
     )

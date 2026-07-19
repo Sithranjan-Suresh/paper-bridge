@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client.js'
 import ExtractionPanel from '../components/ExtractionPanel.jsx'
 import ExplanationPanel from '../components/ExplanationPanel.jsx'
+import UrgencyBreakdown from '../components/UrgencyBreakdown.jsx'
 
 const DOC_TYPE_LABELS = {
   uscis_notice: 'USCIS Notice',
@@ -45,17 +46,17 @@ export default function DocumentDetailPage() {
         ← Back to timeline
       </Link>
 
-      <div className="mt-2 flex items-center gap-2">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          {DOC_TYPE_LABELS[document.doc_type] || document.doc_type}
-        </h1>
-        {document.urgency && (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
-            Urgency: {Math.round(document.urgency.score)}
-          </span>
-        )}
-      </div>
+      <h1 className="mt-2 text-2xl font-semibold text-gray-900">
+        {DOC_TYPE_LABELS[document.doc_type] || document.doc_type}
+      </h1>
       <p className="text-sm text-gray-500">{document.agency}</p>
+
+      {document.urgency && (
+        <section className="mt-6 rounded-lg border border-gray-200 p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Urgency</h2>
+          <UrgencyBreakdown urgency={document.urgency} />
+        </section>
+      )}
 
       {document.document_flagged_for_review && (
         <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
