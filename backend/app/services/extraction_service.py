@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from functools import lru_cache
 
 from dateutil import parser as date_parser
@@ -40,7 +40,8 @@ class ExtractionService:
         for ent in doc.ents:
             if ent.label_ == "DATE":
                 try:
-                    parsed = date_parser.parse(ent.text, fuzzy=True, default=date.today().replace(day=1))
+                    default = datetime.combine(date.today().replace(day=1), datetime.min.time())
+                    parsed = date_parser.parse(ent.text, fuzzy=True, default=default)
                 except (ValueError, OverflowError):
                     continue
                 return Entity(
