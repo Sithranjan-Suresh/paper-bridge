@@ -4,6 +4,7 @@ import { api } from '../api/client.js'
 import ExtractionPanel from '../components/ExtractionPanel.jsx'
 import ExplanationPanel from '../components/ExplanationPanel.jsx'
 import UrgencyBreakdown from '../components/UrgencyBreakdown.jsx'
+import LiteracyToggle from '../components/LiteracyToggle.jsx'
 
 const DOC_TYPE_LABELS = {
   uscis_notice: 'USCIS Notice',
@@ -16,6 +17,8 @@ export default function DocumentDetailPage() {
   const { documentId } = useParams()
   const [document, setDocument] = useState(null)
   const [error, setError] = useState(null)
+  const [literacyLevel, setLiteracyLevel] = useState('standard')
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -31,6 +34,19 @@ export default function DocumentDetailPage() {
       cancelled = true
     }
   }, [documentId])
+
+  const handleLiteracyChange = async (level) => {
+    setLiteracyLevel(level)
+    setIsRegenerating(true)
+    try {
+      const explanation = await api.getExplanation(documentId, level)
+      setDocument((prev) => ({ ...prev, explanation }))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   if (error) {
     return <div className="p-8 text-red-600">Failed to load document: {error}</div>
@@ -71,7 +87,10 @@ export default function DocumentDetailPage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">What This Means</h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">What This Means</h2>
+          <LiteracyToggle value={literacyLevel} onChange={handleLiteracyChange} disabled={isRegenerating} />
+        </div>
         <ExplanationPanel explanation={document.explanation} />
       </section>
     </div>
