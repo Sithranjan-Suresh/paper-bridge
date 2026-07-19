@@ -12,6 +12,10 @@ from app.services.ingestion_service import get_ingestion_service
 from app.services.rag_service import get_rag_service
 
 
+class PipelineError(Exception):
+    """Raised when the pipeline can't process a document; message is safe to show the user."""
+
+
 def _parse_deadline(value: str | None) -> date | None:
     if not value:
         return None
@@ -27,15 +31,30 @@ def process_new_document(db: Session, case_id: int, filename: str, file_bytes: b
     RAG explanation -> case-memory conflict check. Persists everything and
     returns the created Document with all relations populated.
     """
-    ingestion = get_ingestion_service().process(filename, file_bytes)
+    try:
+        ingestion = get_ingestion_service().process(filename, file_bytes)
+    except Exception as exc:
+        raise PipelineError(
+            "Could not read this document. Please try a clearer scan or a different file."
+        ) from exc
+
     raw_text = ingestion["raw_text"]
     ocr_confidence = ingestion["ocr_confidence"]
+
+    if not raw_text.strip():
+        raise PipelineError(
+            "No readable text was found in this document. Please try a clearer scan."
+        )
 
     confidence_service = get_confidence_service()
     document_flagged = confidence_service.should_flag_entire_document(ocr_confidence)
 
     classification = get_classification_service().classify(raw_text)
     doc_type = classification["doc_type"]
+    if classification["flagged_for_review"]:
+        # Doesn't confidently match any of the 4 supported document types
+        # (product_spec.md edge case) — flag rather than force a bad label.
+        document_flagged = True
 
     document = Document(
         case_id=case_id,

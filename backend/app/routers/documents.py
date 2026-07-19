@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Case, Document, TimelineEvent
 from app.schemas import DocumentDetailOut
-from app.services.pipeline_service import process_new_document
+from app.services.pipeline_service import PipelineError, process_new_document
 
 router = APIRouter(tags=["documents"])
 
@@ -64,7 +64,10 @@ async def upload_document(case_id: int, file: UploadFile, db: Session = Depends(
         raise HTTPException(status_code=404, detail="Case not found")
 
     file_bytes = await file.read()
-    document = process_new_document(db, case_id, file.filename, file_bytes)
+    try:
+        document = process_new_document(db, case_id, file.filename, file_bytes)
+    except PipelineError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _document_detail(document, db)
 
 
@@ -99,7 +102,13 @@ def regenerate_explanation(document_id: int, literacy_level: str = "standard", d
             source_citations=json.loads(existing.source_citations or "[]"),
         )
 
-    result = get_rag_service().generate(document.raw_text, literacy_level=literacy_level)
+    try:
+        result = get_rag_service().generate(document.raw_text, literacy_level=literacy_level)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail="Explanation service is temporarily unavailable. Please try again shortly."
+        ) from exc
+
     record = ExplanationRecord(
         document_id=document.id,
         literacy_level=literacy_level,
