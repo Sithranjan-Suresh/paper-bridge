@@ -10,6 +10,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  getDemoCase: () => request('/cases/demo'),
   getTimeline: (caseId) => request(`/cases/${caseId}/timeline`),
   getDocument: (documentId) => request(`/documents/${documentId}`),
   getExplanation: (documentId, literacyLevel) =>

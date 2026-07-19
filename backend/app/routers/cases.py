@@ -8,6 +8,16 @@ from app.schemas import CaseCreate, CaseOut, DocumentSummaryOut, TimelineRespons
 router = APIRouter(prefix="/cases", tags=["cases"])
 
 
+@router.get("/demo", response_model=CaseOut)
+def get_demo_case(db: Session = Depends(get_db)):
+    from app.seed import DEMO_CASE_NAME
+
+    case = db.query(Case).filter(Case.display_name == DEMO_CASE_NAME).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Demo case not seeded")
+    return case
+
+
 @router.post("", response_model=CaseOut)
 def create_case(payload: CaseCreate, db: Session = Depends(get_db)):
     case = Case(display_name=payload.display_name)
