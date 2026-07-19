@@ -25,6 +25,7 @@ class ExplanationOut(BaseModel):
 
 
 class TimelineEventOut(BaseModel):
+    document_id: int
     event_type: str
     related_document_id: int | None
     description: str | None
