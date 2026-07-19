@@ -34,6 +34,16 @@ AGENCY_KEYWORDS: dict[str, list[str]] = {
     "housing_authority_notice": ["Housing Authority", "Section 8", "Public Housing"],
 }
 
+# Canonical display label per document type, regardless of which raw keyword
+# phrasing matched in the letter — keeps the "agency" field consistent across
+# documents instead of showing whichever synonym happened to appear.
+CANONICAL_AGENCY_LABEL: dict[str, str] = {
+    "uscis_notice": "USCIS",
+    "medicaid_snap_notice": "Medicaid/SNAP",
+    "school_enrollment_notice": "School District",
+    "housing_authority_notice": "Housing Authority",
+}
+
 REQUIRED_ACTION_PATTERNS: list[re.Pattern] = [
     re.compile(r"(?:required to|must|please)\s+([^.\n]+)", re.IGNORECASE),
     re.compile(r"(?:submit|complete|confirm|appear for|return)\s+([^.\n]+)", re.IGNORECASE),

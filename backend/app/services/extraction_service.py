@@ -6,6 +6,7 @@ from dateutil import parser as date_parser
 
 from app.data.extraction_patterns import (
     AGENCY_KEYWORDS,
+    CANONICAL_AGENCY_LABEL,
     CASE_NUMBER_PATTERNS,
     REQUIRED_ACTION_PATTERNS,
 )
@@ -71,7 +72,7 @@ class ExtractionService:
             if kw.lower() in text.lower():
                 return Entity(
                     entity_type="agency",
-                    value=kw,
+                    value=CANONICAL_AGENCY_LABEL.get(doc_type, kw),
                     confidence_score=AGENCY_CONFIDENCE_KEYWORD,
                 )
         return None

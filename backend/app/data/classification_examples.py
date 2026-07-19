@@ -28,6 +28,8 @@ CLASSIFICATION_EXAMPLES: dict[str, list[str]] = {
         "Medicaid renewal reminder: submit your annual renewal application to avoid a gap in health coverage.",
         "This letter confirms your SNAP application was received and is under review by the eligibility office.",
         "Your EBT/SNAP case requires updated proof of income within the stated timeframe to continue benefits.",
+        "It is time to renew your Medicaid coverage for the upcoming year. Return the completed verification packet by the due date.",
+        "Please complete and mail back the enclosed forms to keep your family's Medicaid coverage active without a gap.",
     ],
     "school_enrollment_notice": [
         "Riverside Unified School District Enrollment Confirmation Required. Please confirm enrollment documents for your child.",
