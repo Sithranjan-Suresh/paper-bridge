@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Case
+from app.models import Case, Document, TimelineEvent
 from app.schemas import DocumentDetailOut
 from app.services.pipeline_service import process_new_document
 
 router = APIRouter(tags=["documents"])
 
 
-def _document_detail(document) -> DocumentDetailOut:
+def _document_detail(document, db: Session) -> DocumentDetailOut:
     import json
 
     from app.schemas import EntityOut, ExplanationOut, TimelineEventOut, UrgencyOut
@@ -32,6 +32,15 @@ def _document_detail(document) -> DocumentDetailOut:
 
     document_flagged = any(e.flagged_for_review for e in document.entities)
 
+    conflict_events = (
+        db.query(TimelineEvent)
+        .filter(
+            (TimelineEvent.document_id == document.id) | (TimelineEvent.related_document_id == document.id)
+        )
+        .filter(TimelineEvent.event_type.in_(["conflicts_with", "supersedes"]))
+        .all()
+    )
+
     return DocumentDetailOut(
         id=document.id,
         case_id=document.case_id,
@@ -44,7 +53,7 @@ def _document_detail(document) -> DocumentDetailOut:
         entities=[EntityOut.model_validate(e) for e in document.entities],
         urgency=urgency,
         explanation=explanation,
-        conflict_events=[],
+        conflict_events=[TimelineEventOut.model_validate(e) for e in conflict_events],
     )
 
 
@@ -56,4 +65,12 @@ async def upload_document(case_id: int, file: UploadFile, db: Session = Depends(
 
     file_bytes = await file.read()
     document = process_new_document(db, case_id, file.filename, file_bytes)
-    return _document_detail(document)
+    return _document_detail(document, db)
+
+
+@router.get("/documents/{document_id}", response_model=DocumentDetailOut)
+def get_document(document_id: int, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return _document_detail(document, db)
