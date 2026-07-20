@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+*.db
+.env
+.env.local
+app/ml/artifacts/*.pkl
+app/ml/artifacts/*.faiss
+.pytest_cache
+tests
