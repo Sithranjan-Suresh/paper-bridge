@@ -92,8 +92,29 @@ function LetterCard({ letter }) {
 export default function LandingPage() {
   const navigate = useNavigate()
   const rootRef = useRef(null)
+  const lenisRef = useRef(null)
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [demoError, setDemoError] = useState(null)
+
+  const handleSkipIntro = () => {
+    const target = document.getElementById('after-film')
+    if (!target) return
+    // Lenis intercepts scroll (including programmatic smooth-scrollTo) to
+    // drive it through its own animation loop, so hand control back to the
+    // browser first, then jump straight to the first content section — not
+    // just past the pin boundary, which leaves a blank seam/fade gap in view.
+    if (lenisRef.current) {
+      lenisRef.current.destroy()
+      lenisRef.current = null
+    }
+    const headerOffset = 72
+    window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY - headerOffset)
+    // An instant jump lands the visitor directly on this section without
+    // ever crossing its reveal-on-scroll trigger, so it would otherwise sit
+    // at opacity:0 forever. Force it visible; later sections still reveal
+    // normally as the visitor continues scrolling into them.
+    gsap.set(target.querySelectorAll('.pb-reveal'), { opacity: 1, y: 0 })
+  }
 
   const handleViewDemo = async () => {
     setLoadingDemo(true)
@@ -118,6 +139,7 @@ export default function LandingPage() {
     let lenis = null
     if (!reduced && jump === null) {
       lenis = new Lenis({ lerp: 0.09, smoothWheel: true })
+      lenisRef.current = lenis
       lenis.on('scroll', ScrollTrigger.update)
       gsap.ticker.add((t) => lenis.raf(t * 1000))
       gsap.ticker.lagSmoothing(0)
@@ -225,15 +247,36 @@ export default function LandingPage() {
       }
 
       // ----- on-load hero reveal (not scrubbed) -----
-      const chars = gsap.utils.toArray(root.querySelectorAll('.pb-char'))
-      gsap.from(chars, {
-        yPercent: 120,
-        stagger: 0.035,
-        duration: 0.9,
-        ease: 'power4.out',
-        delay: 0.15,
-      })
-      gsap.from('.pb-tagline, .pb-hint', { opacity: 0, y: 14, duration: 0.8, delay: 0.7, ease: 'power2.out' })
+      // Skipped entirely when jumping straight to a scroll position — this
+      // reveal targets .pb-hint/.pb-char independently of the scrub timeline,
+      // and its fixed delay can otherwise stomp their scroll-driven state.
+      const startingAtTop = jump === null || +jump === 0
+      if (startingAtTop) {
+        const chars = gsap.utils.toArray(root.querySelectorAll('.pb-char'))
+        gsap.from(chars, {
+          yPercent: 120,
+          stagger: 0.035,
+          duration: 0.9,
+          ease: 'power4.out',
+          delay: 0.15,
+          overwrite: 'auto',
+        })
+        gsap.from('.pb-tagline, .pb-hint', {
+          opacity: 0,
+          y: 14,
+          duration: 0.8,
+          delay: 0.7,
+          ease: 'power2.out',
+          overwrite: 'auto',
+          onStart: function () {
+            // guard against the delayed entrance firing after the visitor has
+            // already scrolled past chapter 1 (scrub timeline owns opacity then)
+            if (window.scrollY > 40) this.progress(1)
+          },
+        })
+      } else {
+        gsap.set('.pb-char', { yPercent: 0 })
+      }
 
       // ambient drift on inner wrappers (never scrubbed)
       gsap.utils.toArray(root.querySelectorAll('.pb-letter .drift')).forEach((el, i) => {
@@ -256,7 +299,7 @@ export default function LandingPage() {
           start: 'top top',
           end: '+=430%',
           pin: true,
-          scrub: 1,
+          scrub: jump !== null ? true : 1,
           invalidateOnRefresh: true,
         },
       })
@@ -334,12 +377,14 @@ export default function LandingPage() {
         })
       })
 
-      // dev contract
+      // dev contract — force-settle the scrubbed timeline's progress directly;
+      // scrub:1 inertia otherwise leaves the tween lagging behind an instant jump
       const settle = () => {
         ScrollTrigger.refresh()
         if (jump !== null) {
           window.scrollTo(0, +jump || 0)
           ScrollTrigger.update()
+          if (tl.scrollTrigger) tl.progress(tl.scrollTrigger.progress).pause()
         }
         window.__ready = true
       }
@@ -350,7 +395,8 @@ export default function LandingPage() {
     return () => {
       cleanupFns.forEach((fn) => fn())
       ctx.revert()
-      if (lenis) lenis.destroy()
+      if (lenis && lenisRef.current === lenis) lenis.destroy()
+      lenisRef.current = null
       delete window.__ready
     }
   }, [])
@@ -371,14 +417,23 @@ export default function LandingPage() {
       {/* fixed chrome */}
       <header className="pb-header">
         <Wordmark />
-        <button
-          type="button"
-          onClick={handleViewDemo}
-          disabled={loadingDemo}
-          className="rounded-full border border-[#e7e1d4] bg-white/70 px-4 py-1.5 text-sm font-medium text-[#0f172a] transition hover:border-[#cfc7b4] disabled:opacity-60"
-        >
-          {loadingDemo ? 'Opening…' : 'View Demo Case'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSkipIntro}
+            className="hidden text-sm font-medium text-[#475569] underline decoration-[#cfc7b4] underline-offset-4 transition hover:text-[#0f172a] sm:inline"
+          >
+            Skip intro
+          </button>
+          <button
+            type="button"
+            onClick={handleViewDemo}
+            disabled={loadingDemo}
+            className="rounded-full border border-[#e7e1d4] bg-white/70 px-4 py-1.5 text-sm font-medium text-[#0f172a] transition hover:border-[#cfc7b4] disabled:opacity-60"
+          >
+            {loadingDemo ? 'Opening…' : 'View Demo Case'}
+          </button>
+        </div>
       </header>
 
       {/* ---------- THE FILM ---------- */}
@@ -476,7 +531,7 @@ export default function LandingPage() {
       </section>
 
       {/* ---------- AFTER THE FILM ---------- */}
-      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+      <section id="after-film" className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <div className="pb-reveal">
           <p className="pb-section-label">Why PaperBridge</p>
           <h2 className="pb-serif mt-3 max-w-2xl text-[clamp(1.9rem,4vw,3rem)] font-medium leading-tight tracking-tight">
@@ -555,6 +610,24 @@ export default function LandingPage() {
             </button>
           </div>
           {demoError && <p className="mt-3 text-sm text-red-300">{demoError}</p>}
+        </div>
+      </section>
+
+      <section className="border-t border-[#e7e1d4] bg-[#f3f0ea] px-6 py-16">
+        <div className="pb-reveal mx-auto max-w-3xl text-center">
+          <p className="pb-section-label">How it's built</p>
+          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-[#475569]">
+            Classification, extraction, and urgency scoring are real classical ML — sentence-transformer
+            embeddings, spaCy NER, a trained gradient-boosted model — running locally, not LLM calls.
+          </p>
+          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[#e7e1d4] bg-white px-4 py-2 text-sm text-[#475569]">
+            <span className="h-2 w-2 rounded-full bg-[#f97316]" />
+            <span>
+              <span className="font-semibold text-[#0f172a]">Powered by Groq</span> for the one step that
+              needs an LLM — grounded explanations, generated fast enough to stay inside the &lt;15s upload
+              budget.
+            </span>
+          </div>
         </div>
       </section>
 
