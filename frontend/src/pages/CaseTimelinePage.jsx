@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client.js'
+import { withColdStartNotice } from '../api/withColdStartNotice.js'
 import TimelineList from '../components/TimelineList.jsx'
 import ConflictBanner from '../components/ConflictBanner.jsx'
 import UploadDropzone from '../components/UploadDropzone.jsx'
@@ -11,9 +12,10 @@ export default function CaseTimelinePage() {
   const navigate = useNavigate()
   const [timeline, setTimeline] = useState(null)
   const [error, setError] = useState(null)
+  const [wakingBackend, setWakingBackend] = useState(false)
 
   const loadTimeline = useCallback(() => {
-    return api.getTimeline(caseId).then(setTimeline)
+    return withColdStartNotice(api.getTimeline(caseId), () => setWakingBackend(true)).then(setTimeline)
   }, [caseId])
 
   useEffect(() => {
@@ -38,6 +40,11 @@ export default function CaseTimelinePage() {
   if (!timeline) {
     return (
       <div className="mx-auto max-w-3xl p-8">
+        {wakingBackend && (
+          <p className="mb-4 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            Waking up the server — free-tier hosting naps when idle, this can take up to a minute.
+          </p>
+        )}
         <SkeletonBlock className="mb-2 h-8 w-72" />
         <SkeletonBlock className="mb-6 h-4 w-48" />
         <div className="flex flex-col gap-3">

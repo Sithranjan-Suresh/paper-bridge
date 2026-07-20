@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { api } from '../api/client.js'
+import { withColdStartNotice } from '../api/withColdStartNotice.js'
 import '../landing.css'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -95,6 +96,7 @@ export default function LandingPage() {
   const lenisRef = useRef(null)
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [demoError, setDemoError] = useState(null)
+  const [wakingBackend, setWakingBackend] = useState(false)
 
   const handleSkipIntro = () => {
     const target = document.getElementById('after-film')
@@ -119,12 +121,14 @@ export default function LandingPage() {
   const handleViewDemo = async () => {
     setLoadingDemo(true)
     setDemoError(null)
+    setWakingBackend(false)
     try {
-      const demoCase = await api.getDemoCase()
+      const demoCase = await withColdStartNotice(api.getDemoCase(), () => setWakingBackend(true))
       navigate(`/case/${demoCase.id}`)
     } catch (err) {
       setDemoError(err.message)
       setLoadingDemo(false)
+      setWakingBackend(false)
     }
   }
 
@@ -401,15 +405,28 @@ export default function LandingPage() {
     }
   }, [])
 
+  const demoLabel = (idle) => {
+    if (wakingBackend) return 'Waking up the server…'
+    if (loadingDemo) return 'Opening…'
+    return idle
+  }
+
   const demoBtn = (extra = '') => (
-    <button
-      type="button"
-      onClick={handleViewDemo}
-      disabled={loadingDemo}
-      className={`rounded-full bg-[#0f172a] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1e293b] disabled:opacity-60 ${extra}`}
-    >
-      {loadingDemo ? 'Opening…' : 'See the Martinez family’s case →'}
-    </button>
+    <div>
+      <button
+        type="button"
+        onClick={handleViewDemo}
+        disabled={loadingDemo}
+        className={`rounded-full bg-[#0f172a] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1e293b] disabled:opacity-60 ${extra}`}
+      >
+        {demoLabel('See the Martinez family’s case →')}
+      </button>
+      {wakingBackend && (
+        <p className="mt-2 text-xs text-[#94a3b8]">
+          Free-tier hosting naps when idle — first load can take up to a minute.
+        </p>
+      )}
+    </div>
   )
 
   return (
@@ -431,7 +448,7 @@ export default function LandingPage() {
             disabled={loadingDemo}
             className="rounded-full border border-[#e7e1d4] bg-white/70 px-4 py-1.5 text-sm font-medium text-[#0f172a] transition hover:border-[#cfc7b4] disabled:opacity-60"
           >
-            {loadingDemo ? 'Opening…' : 'View Demo Case'}
+            {demoLabel('View Demo Case')}
           </button>
         </div>
       </header>
@@ -606,9 +623,14 @@ export default function LandingPage() {
               disabled={loadingDemo}
               className="rounded-full bg-white px-7 py-3 text-sm font-semibold text-[#0f172a] shadow-lg transition hover:bg-[#eff6ff] disabled:opacity-60"
             >
-              {loadingDemo ? 'Opening…' : 'View Demo Case →'}
+              {demoLabel('View Demo Case →')}
             </button>
           </div>
+          {wakingBackend && (
+            <p className="mt-3 text-xs text-slate-400">
+              Free-tier hosting naps when idle — first load can take up to a minute.
+            </p>
+          )}
           {demoError && <p className="mt-3 text-sm text-red-300">{demoError}</p>}
         </div>
       </section>
