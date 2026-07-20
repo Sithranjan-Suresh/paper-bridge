@@ -12,7 +12,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: GROQ_API_KEY
-        value: ""
         sync: false
       - key: FRONTEND_ORIGIN
         value: https://paperbridge-kappa.vercel.app
