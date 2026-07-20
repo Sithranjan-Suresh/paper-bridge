@@ -39,6 +39,7 @@ class DocumentSummaryOut(BaseModel):
     id: int
     doc_type: str
     agency: str | None
+    subject: str | None
     uploaded_at: datetime
     deadline: str | None
     urgency_score: float | None

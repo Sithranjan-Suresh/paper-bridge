@@ -25,7 +25,7 @@ export default function TimelineEntry({ document, isSuperseded }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-gray-900">
-            {DOC_TYPE_LABELS[document.doc_type] || document.doc_type}
+            {document.subject || DOC_TYPE_LABELS[document.doc_type] || document.doc_type}
           </span>
           {isSuperseded && (
             <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">
@@ -38,7 +38,9 @@ export default function TimelineEntry({ document, isSuperseded }) {
             </span>
           )}
         </div>
-        <p className="truncate text-sm text-gray-500">{document.agency || 'Unknown agency'}</p>
+        <p className="truncate text-sm text-gray-500">
+          {DOC_TYPE_LABELS[document.doc_type] || document.doc_type} · {document.agency || 'Unknown agency'}
+        </p>
         {document.deadline && (
           <p className="text-sm text-gray-500">Deadline: {document.deadline}</p>
         )}

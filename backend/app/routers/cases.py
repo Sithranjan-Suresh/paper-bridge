@@ -27,6 +27,17 @@ def create_case(payload: CaseCreate, db: Session = Depends(get_db)):
     return case
 
 
+def _derive_subject(document) -> str | None:
+    """A short, distinguishing subject line for the timeline card — without
+    this, two documents of the same type (e.g. an original and a rescheduled
+    USCIS notice) are indistinguishable at a glance."""
+    action = next((e.value for e in document.entities if e.entity_type == "required_action"), None)
+    if not action:
+        return None
+    subject = action[0].upper() + action[1:] if action else action
+    return subject if len(subject) <= 60 else subject[:57] + "…"
+
+
 def _document_summary(document) -> DocumentSummaryOut:
     deadline = next((e.value for e in document.entities if e.entity_type == "deadline"), None)
     flagged = any(e.flagged_for_review for e in document.entities)
@@ -34,6 +45,7 @@ def _document_summary(document) -> DocumentSummaryOut:
         id=document.id,
         doc_type=document.doc_type,
         agency=document.agency,
+        subject=_derive_subject(document),
         uploaded_at=document.uploaded_at,
         deadline=deadline,
         urgency_score=document.urgency_score.score if document.urgency_score else None,
