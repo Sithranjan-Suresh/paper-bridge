@@ -1,20 +1,18 @@
 services:
   - type: web
     name: paperbridge-backend
-    env: python
+    runtime: python
     rootDir: backend
     plan: free
-    buildCommand: >-
-      pip install -r requirements.txt &&
-      python -m spacy download en_core_web_sm &&
-      python -m app.ml.build_prototypes &&
-      python -m app.ml.train_urgency_model &&
-      python -m app.ml.build_corpus_index
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    region: oregon
+    branch: main
+    buildCommand: "pip install -r requirements.txt && python -m spacy download en_core_web_sm && python -m app.ml.build_prototypes && python -m app.ml.train_urgency_model && python -m app.ml.build_corpus_index"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: GROQ_API_KEY
+        value: ""
         sync: false
       - key: FRONTEND_ORIGIN
         value: https://paperbridge-kappa.vercel.app
