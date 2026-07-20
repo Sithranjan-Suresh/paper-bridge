@@ -1,7 +1,7 @@
 services:
   - type: web
     name: paperbridge-backend
-    runtime: python
+    env: python
     rootDir: backend
     plan: free
     buildCommand: >-
