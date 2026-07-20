@@ -73,6 +73,13 @@ export default function CaseTimelinePage() {
 
       <div className="mt-8">
         <UploadDropzone onUpload={handleUpload} />
+        <p className="mt-2 text-center text-xs text-gray-400">
+          No document handy?{' '}
+          <a href="/sample-letter.pdf" download className="text-blue-600 underline hover:text-blue-700">
+            Download a sample USCIS letter
+          </a>{' '}
+          to try the pipeline live.
+        </p>
       </div>
     </div>
   )
